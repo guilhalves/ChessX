@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 			PerftTest(&pos, i);
 		}
 
-		ParseFen(&pos, tricky_position);
+		ParseFen(&pos, kiwi_position);
 		
 		for (int i = 2; i < 5; i++)
 		{

@@ -373,9 +373,9 @@ static inline int NegaMax(POS *pos, int alpha, int beta, int depth, LINE *pline)
 	return(alpha);
 }
 
-static void PrintPV()
+static void PrintPV(int depth)
 {
-	for (int count = 0; count < pv_line.length; count++)
+	for (int count = 0; count < depth; count++)
 	{
 		PrintMove(pv_line.pv[count]);
 		printf(" ");
@@ -407,17 +407,17 @@ void SearchBest(POS *pos, int depth)
 		if (score > -MATE_VALUE && score < -MATE_SCORE)
 		{
 			printf("info score mate %d depth %d nodes %lld time %d pv ", -(score+MATE_VALUE)/2-1, search_depth, nodes, GetTimeMs()-start);
-			PrintPV();
+			PrintPV(search_depth);
 			break;
 		} else if (score > MATE_SCORE && score < MATE_VALUE)
 		{
 			printf("info score mate %d depth %d nodes %lld time %d pv ", (MATE_VALUE-score)/2+1, search_depth, nodes, GetTimeMs()-start);
-			PrintPV();
+			PrintPV(search_depth);
 			break;
 		} else
 		{
 			printf("info score cp %d depth %d nodes %lld time %d pv ", score, search_depth, nodes, GetTimeMs()-start);
-			PrintPV();
+			PrintPV(search_depth);
 		}
 
 	}
