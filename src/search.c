@@ -5,7 +5,6 @@
 #define INFINITY 50000
 #define MATE_VALUE 49000
 #define MATE_SCORE 48000
-#define R_FACTOR 2
 #define REDUCTION_LIMIT 3
 #define FULL_DEPTH_MOVES 4
 
@@ -128,11 +127,11 @@ static inline void SortMoves(POS *pos, LIST *list, int bestmove)
 
 static inline int Quiescence(POS *pos, int alpha, int beta)
 {
-	Communicate();
+	if ((nodes & 2047) == 0) Communicate();
 
 	nodes++;
-
-	if (ply > MAX_PLY-1) { return(Evaluate(pos)); }
+	
+	if (ply >= MAX_PLY) { return(Evaluate(pos)); }
 
 	int eval = Evaluate(pos);
 
@@ -214,9 +213,9 @@ static inline int NegaMax(POS *pos, int alpha, int beta, int depth, LINE *pline)
 
 	if (depth == 0) return(Quiescence(pos, alpha, beta));
 	
-	if (ply > MAX_PLY-1) return(Evaluate(pos));
+	if (ply >= MAX_PLY) return(Evaluate(pos));
 	
-	Communicate();
+	if ((nodes & 2047) == 0) Communicate();
 	
 	nodes++;
 	
@@ -225,54 +224,57 @@ static inline int NegaMax(POS *pos, int alpha, int beta, int depth, LINE *pline)
 	int f_prune = 0;
 
 	POS new;
+	
 	if (in_check) depth++;
 	else if (!pv_node)
 	{
-		// static null move pruning
+		score = Evaluate(pos);
 
-		if (depth < 3 && abs(beta-1) > -INFINITY + 100)
+		// static null move pruning
+		if (depth < 3 && abs(beta-1) > -MATE_SCORE)
 		{
-			score = Evaluate(pos);
 			int eval_margin = 120*depth;
 			if (score - eval_margin >= beta) return(score-eval_margin);
-		}
-
-		// null move pruning
-
-		if (depth > 3 && ply)
-		{
-			memcpy(&new, pos, sizeof(POS));
-			MakeNullMove(&new);
-			score = -NegaMax(&new, -beta, -beta+1, depth-1-R_FACTOR, &line);
-			UndoNullMove();
-			
-			if (stopped) return(0);
-			
-			if (score >= beta) return(beta);
 		}
 		
 		if (depth <= 3)
 		{
 			// razoring
 			
-			score = Evaluate(pos) + 125;
-			int new_score;
-			if (score < beta)
+			if (score+125 < beta)
 			{
-				new_score = Quiescence(pos, alpha, beta);
+				int new_score = Quiescence(pos, alpha, beta);
 				
-				if (depth == 1) return((new_score > score) ? new_score : score);
-				
-				score += 175;
-				
-				if (new_score < beta) return((new_score > score) ? new_score : score);
-			}
-
+				if (new_score < beta) return(new_score);
+			}	
+			
 			// futility pruning
 			
-			int fmargin[4] = { 0, 200, 300, 500 };
-			if (abs(alpha) < MATE_SCORE && Evaluate(pos) + fmargin[depth] <= alpha)
+			if (abs(alpha) < MATE_SCORE && score + 80*depth <= alpha)
 			{ f_prune = 1;}
+		}
+
+		// null move pruning
+		
+		if (depth >= 2 && score >= beta)
+		{
+			int reduction = (depth) / 4 + 3 + (((score-beta)/80 > 3) ? 3 : (score-beta)/80);
+
+			memcpy(&new, pos, sizeof(POS));
+
+			MakeNullMove(&new);
+
+			score = -NegaMax(&new, -beta, -beta+1, depth - reduction, &line);
+
+			UndoNullMove();
+
+			if (stopped) return(0);
+
+			if (score >= beta)
+			{
+				if (abs(score) >= MATE_SCORE-ply) return(beta);
+				return(score);
+			}
 		}
 	}
 	

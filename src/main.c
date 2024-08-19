@@ -40,6 +40,6 @@ int main(int argc, char *argv[])
 	}
 	
 	UCILoop(&pos);
-	
+
 	return(0);
 }

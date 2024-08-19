@@ -239,7 +239,7 @@ void UCILoop(POS *pos)
 
 	int mb = 128;
 
-	printf("id name PedroBot\n");
+	//printf("id name PedroBot\n");
 	printf("id author Guilherme H.\n");
 	
 	while (1)
