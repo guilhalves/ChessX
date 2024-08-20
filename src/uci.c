@@ -222,7 +222,7 @@ void ParseGo(POS *pos, char *command)
 		{
 			time -= 50;
 		}
-		stop_time = start_time + time + inc;
+		stop_time = start_time + time + inc/2;
 	}
 
 	if (depth == -1) depth = MAX_PLY;
