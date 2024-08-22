@@ -388,10 +388,10 @@ static inline void EvalKnight(POS *pos, CELL c, bool side, int *opening_score, i
 	op_score += positional_score[OPENING][N][(side) ? c : mirror_score[c]];
 	end_score += positional_score[ENDGAME][N][(side) ? c : mirror_score[c]];
 	
-	int mobility = CountBits(KnightAttacks[c] & ~pos->occ[side]);
-	op_score += mobility;
-	end_score += mobility;
-
+	int fork = CountBits(KnightAttacks[c] & pos->occ[side^1])/2;
+	op_score += fork;
+	end_score += fork;
+	
 	*endgame_score += (side) ? end_score : -end_score;
 	*opening_score += (side) ? op_score : -op_score;
 	
