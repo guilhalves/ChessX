@@ -1,4 +1,4 @@
-LDFLAGS=-Ofast -flto=auto -DUSE_SSE41 -msse4.1 -DUSE_SSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse
+LDFLAGS=-Ofast -march=native -flto=auto -DUSE_SSE41 -msse4.1 -DUSE_SSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse
 
 WINCC=x86_64-w64-mingw32-gcc
 CC=gcc
