@@ -1,9 +1,6 @@
 #include "../include/eval.h"
 #include "../include/search.h"
 
-#define OPENING 0
-#define ENDGAME 1
-#define MIDDLE_GAME 2
 #define DPAWN_PENALTY_OP -5
 #define DPAWN_PENALTY_END -10
 #define ISOLATED_PAWN_OP -5
@@ -259,24 +256,28 @@ void InitEvaluationMasks()
 	}
 }
 
-static inline int GetGamePhaseScore(POS *pos)
+int GetGamePhaseScore(POS *pos, int *game_phase)
 {
-	int white_pieces_scores = 0;
-	int black_pieces_scores = 0;
+	int white_score;
+	int black_score;
+	
+	white_score = CountBits(pos->bb[B]) * material_score[OPENING][B];
+	white_score += CountBits(pos->bb[R]) * material_score[OPENING][R];
+	white_score += CountBits(pos->bb[Q]) * material_score[OPENING][Q];
+	white_score += CountBits(pos->bb[N]) * material_score[OPENING][N];
+	
+	black_score = CountBits(pos->bb[b]) * material_score[OPENING][B];
+	black_score += CountBits(pos->bb[r]) * material_score[OPENING][R];
+	black_score += CountBits(pos->bb[q]) * material_score[OPENING][Q];
+	black_score += CountBits(pos->bb[n]) * material_score[OPENING][N];
 
-	for (int piece = B; piece <= N; piece++)
-	{
-		if (piece == P) continue;
-		white_pieces_scores += CountBits(pos->bb[piece]) * material_score[OPENING][piece];
-	}
+	int score = white_score + black_score;
 
-	for (int piece = b; piece <= n; piece++)
-	{
-		if (piece == p) continue;
-		black_pieces_scores += CountBits(pos->bb[piece]) * material_score[OPENING][GetType(piece)];
-	}
+	if (score > OPENING_PHASE_SCORE) *game_phase = OPENING;
+	else if (score < ENDGAME_PHASE_SCORE) *game_phase = ENDGAME;
+	else *game_phase = MIDDLE_GAME;
 
-	return(white_pieces_scores+black_pieces_scores);
+	return(score);
 };
 
 static inline void EvalBishop(POS *pos, CELL c, bool side, int *opening_score, int *endgame_score)
@@ -423,20 +424,9 @@ static void (*EvalPiece[6])(POS *pos, CELL c, bool side, int *op_score, int *end
 
 int Evaluate(POS *pos)
 {
-	int game_phase_score = GetGamePhaseScore(pos);
-	int game_phase = -1;
+	int game_phase;
+	int game_phase_score = GetGamePhaseScore(pos, &game_phase);
 	
-	if (game_phase_score > OPENING_PHASE_SCORE)
-	{
-		game_phase = OPENING;
-	} else if (game_phase_score < ENDGAME_PHASE_SCORE)
-	{
-		game_phase = ENDGAME;
-	} else
-	{
-		game_phase = MIDDLE_GAME;
-	}
-
 	int opening_score = 0;
 	int endgame_score = 0;
 	for (CELL c = 0; c < 64; c++)
@@ -447,12 +437,19 @@ int Evaluate(POS *pos)
 	
 	int score = 0;
 	
-	if (game_phase == MIDDLE_GAME)
+	switch(game_phase)
 	{
-		score = (opening_score * game_phase_score + endgame_score*(OPENING_PHASE_SCORE-game_phase_score))/OPENING_PHASE_SCORE;
-	} else if (game_phase == OPENING) score = opening_score;
-	else score = endgame_score;
-
+		case MIDDLE_GAME:
+			score = (opening_score * game_phase_score + endgame_score*(OPENING_PHASE_SCORE-game_phase_score))/OPENING_PHASE_SCORE;
+			break;
+		case OPENING:
+			score = opening_score;
+			break;
+		case ENDGAME:
+			score = endgame_score;
+			break;
+	}
+	
 	score = (score * (100-fifty)) / 100;
 	return((pos->side) ? score : -score);
 }

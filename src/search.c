@@ -195,12 +195,28 @@ static inline void UndoNullMove()
 	return;
 }
 
+static inline int Contempt(POS *pos)
+{
+	int game_phase;
+	GetGamePhaseScore(pos, &game_phase);
+	
+	switch(game_phase)
+	{
+		case MIDDLE_GAME:
+			return(-25);
+		case OPENING:
+			return(-50);
+		default:
+			return(0);
+	}
+}
+
 static inline int NegaMax(POS *pos, int alpha, int beta, int depth, LINE *pline)
 {
 	LINE line;
 	line.length = 0;
 	
-	if ((ply && IsRepetition(pos)) || fifty >= 100) return(-50);
+	if ((ply && IsRepetition(pos)) || fifty >= 100) return(Contempt(pos));
 	
 	int score;
 
@@ -367,7 +383,7 @@ static inline int NegaMax(POS *pos, int alpha, int beta, int depth, LINE *pline)
 	if (legals == 0)
 	{
 		if (in_check) return(-MATE_VALUE+ply);
-		return(-50);
+		return(Contempt(pos));
 	}
 
 	WriteHash(pos, alpha, pline->pv[0], depth, hash_flag);
