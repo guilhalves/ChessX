@@ -2,6 +2,8 @@
 #include "../include/utils.h"
 #include "../include/uci.h"
 
+#define Swap(x, y) ((x ^= y), (y ^= x), (x ^= y))
+
 #define INFINITY 50000
 #define MATE_VALUE 49000
 #define MATE_SCORE 48000
@@ -105,23 +107,19 @@ static inline void SortMoves(POS *pos, LIST *list, int bestmove)
 		else move_scores[count] = ScoreMove(pos, list->moves[count]);
 
 	}
-
+	
 	for (int current = 0; current < list->end; current++)
 	{
 		for (int next = current; next < list->end; next++)
 		{
 			if (move_scores[current] < move_scores[next])
 			{
-				int temp = move_scores[current];
-				move_scores[current] = move_scores[next];
-				move_scores[next] = temp;
-
-				temp = list->moves[current];
-				list->moves[current] = list->moves[next];
-				list->moves[next] = temp;
+				Swap(move_scores[current], move_scores[next]);
+				Swap(list->moves[current], list->moves[next]);
 			}
 		}
 	}
+	
 	return;
 }
 
@@ -134,12 +132,10 @@ static inline int Quiescence(POS *pos, int alpha, int beta)
 	if (ply >= MAX_PLY) { return(Evaluate(pos)); }
 
 	int eval = Evaluate(pos);
-
-	if (eval > alpha)
-	{
-		alpha = eval;
-		if (eval >= beta) return(beta);
-	}
+	
+	if (eval >= beta) return(beta);
+	
+	if (eval > alpha) alpha = eval;
 
 	LIST list;
 
@@ -172,7 +168,7 @@ static inline int Quiescence(POS *pos, int alpha, int beta)
 			if (score >= beta) return(beta);
 		}
 	}
-
+	
 	return(alpha);
 }
 
@@ -245,7 +241,7 @@ static inline int NegaMax(POS *pos, int alpha, int beta, int depth, LINE *pline)
 	else if (!pv_node)
 	{
 		score = Evaluate(pos);
-
+		
 		// static null move pruning
 		if (depth < 3 && abs(beta-1) > -MATE_SCORE)
 		{
@@ -265,9 +261,13 @@ static inline int NegaMax(POS *pos, int alpha, int beta, int depth, LINE *pline)
 			}	
 			
 			// futility pruning
-			
+				
 			if (abs(alpha) < MATE_SCORE && score + 80*depth <= alpha)
 			{ f_prune = 1;}
+			
+			// reverse futility pruning
+
+			if (score - 80*depth >= beta) return(beta);
 		}
 
 		// null move pruning
