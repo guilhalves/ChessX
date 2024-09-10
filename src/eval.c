@@ -14,7 +14,8 @@
 #define QUEEN_MOB_OP 1
 #define QUEEN_MOB_END 2
 #define KING_SAFETY_BONUS 5
-#define CONNECTED_ROOKS_BONUS 8
+#define CONNECTED_ROOKS_BONUS 5
+#define BISHOP_PAIR_BONUS 50
 #define OPENING_PHASE_SCORE 6192
 #define ENDGAME_PHASE_SCORE 518
 
@@ -290,6 +291,13 @@ static inline void EvalBishop(POS *pos, CELL c, bool side, int *opening_score, i
 	int mobility = CountBits(GetBishopAttacks(c, pos->occ[black] | pos->occ[white]));
 	op_score += (mobility-BISHOP_UNIT)*BISHOP_MOB_OP;
 	end_score += (mobility-BISHOP_UNIT)*BISHOP_MOB_END;
+	
+	if (CountBits(pos->bb[Our(B, side)]) >= 2)
+	{
+		op_score += BISHOP_PAIR_BONUS;
+		end_score += BISHOP_PAIR_BONUS;
+	}
+		
 
 	*endgame_score += (side) ? end_score : -end_score;
 	*opening_score += (side) ? op_score : -op_score;
@@ -357,11 +365,8 @@ static inline void EvalPawn(POS *pos, CELL c, bool side, int *opening_score, int
 	
 	int double_pawns = CountBits(column_masks[c] & pos->bb[Our(P, side)]);
 
-	if (double_pawns > 1)
-	{
-		op_score += (double_pawns-1)*DPAWN_PENALTY_OP;
-		end_score += (double_pawns-1)*DPAWN_PENALTY_END;
-	}
+	op_score += (double_pawns-1)*DPAWN_PENALTY_OP;
+	end_score += (double_pawns-1)*DPAWN_PENALTY_END;
 	
 	if ((pos->bb[Our(P, side)] & isolated_masks[c]) == 0)
 	{
@@ -374,6 +379,11 @@ static inline void EvalPawn(POS *pos, CELL c, bool side, int *opening_score, int
 		op_score += passed_pawn_bonus[get_row[(side) ? c : mirror_score[c]]];
 		end_score += passed_pawn_bonus[get_row[(side) ? c : mirror_score[c]]];
 	}
+
+	int connected = CountBits(PawnAttacks[c][side^1] & pos->bb[Our(P, side)]);
+
+	op_score += connected;
+	end_score += connected;
 	
 	*endgame_score += (side) ? end_score : -end_score;
 	*opening_score += (side) ? op_score : -op_score;

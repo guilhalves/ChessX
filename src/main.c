@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
 		{
 			PerftTest(&pos, i);
 		}
+		ParseGo(&pos, "go depth 10");
 
 		ParseFen(&pos, kiwi_position);
 		
@@ -35,10 +36,11 @@ int main(int argc, char *argv[])
 		{
 			PerftTest(&pos, i);
 		}
+		ParseGo(&pos, "go depth 10");
 
 		return(0);
 	}
-	
+
 	UCILoop(&pos);
 
 	return(0);

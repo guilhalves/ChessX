@@ -239,7 +239,7 @@ void UCILoop(POS *pos)
 
 	int mb = 128;
 
-	//printf("id name PedroBot\n");
+	printf("id name ChessX\n");
 	printf("id author Guilherme H.\n");
 	
 	while (1)
@@ -262,7 +262,7 @@ void UCILoop(POS *pos)
 		
 		else if (!strncmp(input, "uci", 3))
 		{
-			printf("id name PedroBot\n");
+			printf("id name ChessX\n");
 			printf("id author Guilherme H.\n");
 			printf("\noption name Hash type spin default 128 min 1 max 1024\n");
 			printf("uciok\n");
@@ -276,7 +276,7 @@ void UCILoop(POS *pos)
 		{
 			sscanf(input, "%*s %*s %*s %*s %d", &mb);
 
-			if (mb < 1) mb = 1;
+			//if (mb < 1) mb = 1;
 			if (mb > 1024) mb = 1024;
 
 			InitHashTable(mb);
