@@ -380,11 +380,11 @@ static inline void EvalPawn(POS *pos, CELL c, bool side, int *opening_score, int
 		end_score += passed_pawn_bonus[get_row[(side) ? c : mirror_score[c]]];
 	}
 
-	int connected = CountBits(PawnAttacks[c][side^1] & pos->bb[Our(P, side)]);
+	int connected = CountBits(PawnAttacks[side^1][c] & pos->bb[Our(P, side)]);
 
 	op_score += connected;
 	end_score += connected;
-	
+		
 	*endgame_score += (side) ? end_score : -end_score;
 	*opening_score += (side) ? op_score : -op_score;
 
