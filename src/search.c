@@ -54,6 +54,7 @@ static inline int IsRepetition(POS *pos)
 static inline int ReadHash(POS *pos, int alpha, int beta, int *bestmove, int depth)
 {
 	TT *hash_entry = &hash_table[pos->hash % hash_entries];
+	
 	if (hash_entry->hash == pos->hash)
 	{
 		if (hash_entry->depth >= depth)
@@ -69,6 +70,7 @@ static inline int ReadHash(POS *pos, int alpha, int beta, int *bestmove, int dep
 
 		*bestmove = hash_entry->bestmove;
 	}
+
 	return(NO_HASH_ENTRY);
 }
 
@@ -123,6 +125,22 @@ static inline void SortMoves(POS *pos, LIST *list, int bestmove)
 	return;
 }
 
+static inline int Contempt(POS *pos)
+{
+	int game_phase;
+	GetGamePhaseScore(pos, &game_phase);
+	
+	switch(game_phase)
+	{
+		case MIDDLE_GAME:
+			return(-25);
+		case OPENING:
+			return(-50);
+		default:
+			return(0);
+	}
+}
+
 static inline int Quiescence(POS *pos, int alpha, int beta)
 {
 	if ((nodes & 2047) == 0) Communicate();
@@ -153,6 +171,11 @@ static inline int Quiescence(POS *pos, int alpha, int beta)
 		
 		if (!MakeMove(&new, list.moves[count])) continue;
 		
+		if (
+		eval + material_score[0][pos->pt[GetTo(list.moves[count])]] + 200 < alpha &&
+		(GetFlag(list.moves[count]) & PROMOTION) == 0
+		) continue;
+
 		ply++;
 
 		score = -Quiescence(&new, -beta, -alpha);
@@ -191,22 +214,6 @@ static inline void UndoNullMove()
 	return;
 }
 
-static inline int Contempt(POS *pos)
-{
-	int game_phase;
-	GetGamePhaseScore(pos, &game_phase);
-	
-	switch(game_phase)
-	{
-		case MIDDLE_GAME:
-			return(-25);
-		case OPENING:
-			return(-50);
-		default:
-			return(0);
-	}
-}
-
 static inline int NegaMax(POS *pos, int alpha, int beta, int depth, LINE *pline)
 {
 	LINE line;
@@ -218,7 +225,7 @@ static inline int NegaMax(POS *pos, int alpha, int beta, int depth, LINE *pline)
 
 	int pv_node = beta-alpha > 1;
 	
-	if (ply && (score = ReadHash(pos, alpha, beta, pline->pv, depth)) != NO_HASH_ENTRY && pv_node == 0)
+	if (ply && (score = ReadHash(pos, alpha, beta, pline->pv, depth)) != NO_HASH_ENTRY && !pv_node)
 	{
 		return(score);
 	}
@@ -292,6 +299,15 @@ static inline int NegaMax(POS *pos, int alpha, int beta, int depth, LINE *pline)
 				return(score);
 			}
 		}
+
+		// internal iterative deepening
+		
+		if (pline->pv[0] == 0 && depth > 5) 
+		{
+			memcpy(&new, pos, sizeof(POS));
+			NegaMax(&new, alpha, beta, depth/4, pline);
+		}
+
 	}
 	
 	LIST list;
