@@ -239,7 +239,7 @@ void UCILoop(POS *pos)
 
 	int mb = 128;
 
-	printf("id name ChessX\n");
+	printf("id name ChessX 2.0\n");
 	printf("id author Guilherme H.\n");
 	
 	while (1)
@@ -262,7 +262,7 @@ void UCILoop(POS *pos)
 		
 		else if (!strncmp(input, "uci", 3))
 		{
-			printf("id name ChessX\n");
+			printf("id name ChessX 2.0\n");
 			printf("id author Guilherme H.\n");
 			printf("\noption name Hash type spin default 128 min 1 max 1024\n");
 			printf("uciok\n");

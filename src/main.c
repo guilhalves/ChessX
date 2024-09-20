@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	InitSlidersAttacks(rook);
 	InitCellsBetween();
 	InitRandomKeys();
-	InitHashTable(128);
+	InitHashTable(256);
 	InitEvaluationMasks();
 
 	POS pos;
