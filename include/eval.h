@@ -15,4 +15,6 @@ int GetGamePhaseScore(POS *pos, int *game_phase);
 
 int Evaluate(POS *pos);
 
+extern int material_score[2][6];
+
 #endif
